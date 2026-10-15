@@ -12,7 +12,7 @@ Use Node.js 24 and npm. From a fresh clone:
 
 ```sh
 npm ci
-npx playwright install chromium
+npx playwright install chromium firefox
 npm run check
 npm test
 ```
@@ -30,7 +30,7 @@ For API checks without a browser, run `npm run test:api`. To explore the app, ru
 - **Input handling:** invalid task data, malformed JSON, foreign browser origins, and rendering task titles as text.
 - **Configuration:** invalid port values fail before the server starts.
 
-There are 10 API/configuration checks and 6 Chromium checks. The workflow badge links to the actual run history; configuration alone is not evidence of a passing browser run.
+There are 11 API/configuration checks and 6 browser scenarios run in both Chromium and Firefox: 23 checks in total. Viewer permissions include rejected create and complete requests, with task data unchanged after a rejected completion. The workflow badge links to the actual run history.
 
 ## Design decisions
 
@@ -68,6 +68,6 @@ CI runs on pushes to `main`, pull requests, and manual dispatch. It uses two wor
 
 This is a focused starter, not a production authentication service. The demo has public plaintext credentials, in-memory data, HTTP-only local hosting, and no rate limiting or account recovery. Its cookie has `HttpOnly` and `SameSite=Strict`; it is not `Secure` because the app runs on local HTTP. Do not deploy it as a real service.
 
-Chromium is the only configured browser. SSO/MFA, visual baselines, accessibility audits, persistent databases, and Azure DevOps execution are not implemented. The next useful additions are broader role-boundary tests and an independently verified second-browser run, not more framework layers.
+Chromium and Firefox are configured; WebKit is not included yet. SSO/MFA, visual baselines, accessibility audits, persistent databases, and Azure DevOps execution are not implemented. Broader permission boundaries and accessibility checks remain useful next additions.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and the [MIT license](LICENSE).
