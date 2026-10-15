@@ -26,7 +26,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium firefox
       - run: npm run check
       - run: npm test
       - run: npm run report:allure
