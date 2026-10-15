@@ -20,6 +20,17 @@ test('@smoke viewer cannot create tasks even through the API', async ({ request 
   expect((await request.post('/api/tasks', { data: { title: 'Forbidden', priority: 'normal' } })).status()).toBe(403);
 });
 
+test('@smoke viewer cannot complete an existing task through the API', async ({ request }) => {
+  await signIn(request, 'viewer');
+  const before = await (await request.get('/api/tasks')).json();
+  const task = before.tasks[0];
+  expect(task.done).toBe(false);
+  const result = await request.post(`/api/tasks/${task.id}/complete`);
+  expect(result.status()).toBe(403);
+  expect(await result.json()).toEqual({ error: 'Editor role required.' });
+  expect(await (await request.get('/api/tasks')).json()).toEqual(before);
+});
+
 test('@smoke editor can create, read and complete a task', async ({ request }) => {
   await signIn(request, 'editor');
   const result = await request.post('/api/tasks', { data: { title: 'Check release notes', priority: 'high' } });
