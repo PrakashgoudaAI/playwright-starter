@@ -1,0 +1,12 @@
+node_modules/
+.playwright-browsers/
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+.auth/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.tsbuildinfo
