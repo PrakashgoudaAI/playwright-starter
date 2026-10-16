@@ -19,18 +19,18 @@ npm test
 
 Playwright starts and stops the demo server. Port `4173` must be available; set `DEMO_PORT=4300` to use a different port. The suite intentionally targets `127.0.0.1`, not an external application. `.env` files are not loaded automatically.
 
-For API checks without a browser, run `npm run test:api`. To explore the app, run `npm run demo` and open `http://127.0.0.1:4173`. The public demo accounts are in [`accounts.ts`](examples/demo-app/accounts.ts).
+For session lifecycle checks without a server or browser, run `npm run test:unit`. For API checks without a browser, run `npm run test:api`. To explore the app, run `npm run demo` and open `http://127.0.0.1:4173`. The public demo accounts are in [`accounts.ts`](examples/demo-app/accounts.ts).
 
 ## What the tests cover
 
-- **Authentication:** rejected credentials, protected routes, UI sign-in/sign-out, and server-side invalidation of a logged-out cookie.
+- **Authentication:** rejected credentials, protected routes, UI sign-in/sign-out, token rotation, and server-side invalidation of a logged-out cookie.
 - **Permissions:** viewers can read tasks but cannot create them through the API; editing controls are absent from their page.
 - **Task workflows:** create a high-priority task, find its table row, and mark it complete.
-- **Isolation:** two simultaneous sessions receive separate datasets; one cannot complete the other's task.
+- **Isolation:** two simultaneous sessions receive separate datasets; one cannot read or complete the other's task. Logging out one session leaves the other active.
 - **Input handling:** invalid task data, malformed JSON, foreign browser origins, and rendering task titles as text.
 - **Configuration:** invalid port values fail before the server starts.
 
-There are 11 API/configuration checks and 6 browser scenarios run in both Chromium and Firefox: 23 checks in total. Viewer permissions include rejected create and complete requests, with task data unchanged after a rejected completion. The workflow badge links to the actual run history.
+The suite defines 13 API/configuration checks and 6 browser scenarios run in both Chromium and Firefox: 25 Playwright checks. Six additional Node.js unit tests cover session isolation, token rotation, revocation, and exact expiry boundaries without sleeps. Viewer permissions include rejected create and complete requests, with task data unchanged after a rejected completion. The workflow badge describes the published branch; unpushed changes require a fresh full run before publication.
 
 ## Design decisions
 
@@ -53,7 +53,7 @@ tests/              API and browser specifications
 
 ## Reports and CI
 
-Each test run writes a Playwright HTML report, JUnit XML, and Allure results. Traces, screenshots, and video are retained for browser failures. Retries are disabled so a flaky failure remains visible.
+The Playwright run writes an HTML report, JUnit XML, and Allure results. The Node.js unit tests run first and report to the console; their results are not merged into the Playwright reports. Traces, screenshots, and video are retained for browser failures. Retries are disabled so a flaky failure remains visible.
 
 ```sh
 npx playwright show-report
@@ -71,3 +71,5 @@ This is a focused starter, not a production authentication service. The demo has
 Chromium and Firefox are configured; WebKit is not included yet. SSO/MFA, visual baselines, accessibility audits, persistent databases, and Azure DevOps execution are not implemented. Broader permission boundaries and accessibility checks remain useful next additions.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and the [MIT license](LICENSE).
+
+Architecture notes: [session ownership and expiry](docs/decisions/001-session-ownership.md) and [test layers](docs/decisions/002-test-layers.md).

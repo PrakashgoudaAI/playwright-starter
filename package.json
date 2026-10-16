@@ -8,7 +8,8 @@
   "scripts": {
     "check": "tsc --noEmit",
     "demo": "node --experimental-strip-types examples/demo-app/server.ts",
-    "test": "playwright test",
+    "test": "npm run test:unit && playwright test",
+    "test:unit": "node --test tests/unit/session-store.test.ts",
     "test:api": "playwright test --project=api",
     "test:smoke": "playwright test --grep @smoke",
     "report:allure": "allure generate allure-results --clean -o allure-report"
