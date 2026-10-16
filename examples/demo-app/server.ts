@@ -2,11 +2,10 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID } from 'node:crypto';
 import { accounts, type Role } from './accounts.ts';
 import { readEnvironment } from '../../src/config/environment.ts';
+import { SessionStore, type Session, type Task } from './session-store.ts';
 
 const { port, baseURL } = readEnvironment();
-type Task = { id: string; title: string; priority: 'normal' | 'high'; done: boolean };
-type Session = { role: Role; expires: number; tasks: Task[] };
-const sessions = new Map<string, Session>();
+const sessions = new SessionStore();
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 function document(body: string) {
@@ -54,11 +53,7 @@ const server = createServer(async (req, res) => {
     const method = req.method ?? 'GET';
     const api = path.startsWith('/api/');
     const id = req.headers.cookie?.split(';').map(c => c.trim()).find(c => c.startsWith('demo_session='))?.slice(13);
-    let session = id ? sessions.get(id) : undefined;
-    if (session && session.expires <= Date.now()) {
-      sessions.delete(id!);
-      session = undefined;
-    }
+    const session = sessions.find(id);
     if (method !== 'GET' && req.headers.origin && req.headers.origin !== baseURL) {
       json(res, 403, { error: 'Origin not allowed.' }); return;
     }
@@ -75,24 +70,29 @@ const server = createServer(async (req, res) => {
         return;
       }
       // Each login owns its dataset so simultaneous tests cannot mutate each other.
-      if (id) sessions.delete(id);
-      const token = randomUUID();
-      sessions.set(token, { role, expires: Date.now() + 15 * 60_000, tasks: [{ id: randomUUID(), title: 'Review test plan', priority: 'normal', done: false }] });
+      const { token } = sessions.issue(role, id);
       res.setHeader('Set-Cookie', `demo_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=900`);
       if (api) json(res, 201, { role }); else redirect(res, '/board');
       return;
     }
     if ((method === 'POST' && path === '/logout') || (method === 'DELETE' && path === '/api/session')) {
-      if (id) sessions.delete(id);
+      sessions.revoke(id);
       res.setHeader('Set-Cookie', 'demo_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0');
       if (api) { res.writeHead(204); res.end(); } else redirect(res, '/login');
       return;
     }
-    if (path === '/board' || path === '/api/session' || path === '/api/tasks' || path === '/tasks' || /^\/(api\/)?tasks\/[\w-]+\/complete$/.test(path)) {
+    const taskRead = /^\/api\/tasks\/([\w-]+)$/.exec(path);
+    if (path === '/board' || path === '/api/session' || path === '/api/tasks' || path === '/tasks' || taskRead || /^\/(api\/)?tasks\/[\w-]+\/complete$/.test(path)) {
       if (!session) { if (api) json(res, 401, { error: 'Sign in required.' }); else redirect(res, '/login'); return; }
       if (method === 'GET' && path === '/board') { html(200, board(session)); return; }
       if (method === 'GET' && path === '/api/session') { json(res, 200, { role: session.role }); return; }
       if (method === 'GET' && path === '/api/tasks') { json(res, 200, { tasks: session.tasks }); return; }
+      if (method === 'GET' && taskRead) {
+        const task = session.tasks.find(t => t.id === taskRead[1]);
+        // Ownership is checked by looking only inside the authenticated session.
+        json(res, task ? 200 : 404, task ?? { error: 'Task not found.' });
+        return;
+      }
       if (method === 'POST' && (path === '/tasks' || path === '/api/tasks' || path.endsWith('/complete'))) {
         if (session.role !== 'editor') { json(res, 403, { error: 'Editor role required.' }); return; }
         if (path.endsWith('/complete')) {
@@ -123,7 +123,7 @@ const server = createServer(async (req, res) => {
   }
 });
 const sweep = setInterval(() => {
-  for (const [id, session] of sessions) if (session.expires <= Date.now()) sessions.delete(id);
+  sessions.purgeExpired();
 }, 60_000).unref();
 server.listen(port, '127.0.0.1', () => console.log(`Demo listening at ${baseURL}`));
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => {
