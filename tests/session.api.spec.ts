@@ -74,9 +74,58 @@ test('@smoke separates data between two simultaneous sessions', async ({ request
     const created = await request.post('/api/tasks', { data: { title: 'Private to first session', priority: 'normal' } });
     expect(created.status()).toBe(201);
     const task = await created.json();
+    const owned = await request.get(`/api/tasks/${task.id}`);
+    expect(owned.status()).toBe(200);
+    expect(await owned.json()).toEqual(task);
     expect((await (await other.get('/api/tasks')).json()).tasks).toHaveLength(1);
+    const deniedRead = await other.get(`/api/tasks/${task.id}`);
+    expect(deniedRead.status()).toBe(404);
+    expect(await deniedRead.json()).toEqual({ error: 'Task not found.' });
     expect((await other.post(`/api/tasks/${task.id}/complete`)).status()).toBe(404);
+    expect(await (await request.get(`/api/tasks/${task.id}`)).json()).toEqual(task);
   } finally { await other.delete('/api/session'); await other.dispose(); }
+});
+
+test('@smoke signing in again rotates the cookie and invalidates the old session', async ({ request, playwright, baseURL }) => {
+  if (!baseURL) throw new Error('Set baseURL before creating a demo session.');
+  await signIn(request, 'editor');
+  const oldState = await request.storageState();
+  const stale = await playwright.request.newContext({ baseURL, storageState: oldState });
+  try {
+    const created = await request.post('/api/tasks', { data: { title: 'Old session only', priority: 'normal' } });
+    expect(created.status()).toBe(201);
+    await signIn(request, 'viewer');
+    const oldCookie = oldState.cookies.find(c => c.name === 'demo_session');
+    const newCookie = (await request.storageState()).cookies.find(c => c.name === 'demo_session');
+    expect(oldCookie).toBeDefined();
+    expect(newCookie).toBeDefined();
+    expect(newCookie!.value).not.toBe(oldCookie!.value);
+    const rejected = await stale.get('/api/tasks');
+    expect(rejected.status()).toBe(401);
+    expect(await rejected.json()).toEqual({ error: 'Sign in required.' });
+    expect((await (await request.get('/api/tasks')).json()).tasks).toHaveLength(1);
+    expect((await request.post('/api/tasks', { data: { title: 'Denied', priority: 'normal' } })).status()).toBe(403);
+  } finally {
+    await stale.dispose();
+  }
+});
+
+test('@smoke logging out one session does not invalidate another session', async ({ request, playwright, baseURL }) => {
+  if (!baseURL) throw new Error('Set baseURL before creating a demo session.');
+  const other = await playwright.request.newContext({ baseURL });
+  try {
+    await signIn(request, 'editor');
+    await signIn(other, 'editor');
+    const before = await (await other.get('/api/tasks')).json();
+    expect((await request.delete('/api/session')).status()).toBe(204);
+    expect((await request.get('/api/tasks')).status()).toBe(401);
+    const retained = await other.get('/api/tasks');
+    expect(retained.status()).toBe(200);
+    expect(await retained.json()).toEqual(before);
+  } finally {
+    await other.delete('/api/session');
+    await other.dispose();
+  }
 });
 
 test('@smoke rejects browser requests from a different origin', async ({ request }) => {
