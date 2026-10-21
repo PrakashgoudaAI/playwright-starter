@@ -1,5 +1,7 @@
 # Reusable Playwright patterns
 
+For a complete sign-in, save, API read-back, and table workflow, see the [booking reference](BOOKING-WORKFLOW.md). It composes the widgets below against the local HTTP backend; the standalone pattern cases remain isolated contract tests.
+
 Start with the control you need, then keep the application-specific labels and business actions in your page object. These examples are small on purpose: a native select, an editable combobox, and a checkbox group should not share a catch-all click helper.
 
 ## Run the examples

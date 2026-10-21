@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID } from 'node:crypto';
 import { accounts, type Role } from './accounts.ts';
 import { readEnvironment } from '../../src/config/environment.ts';
+import { handleBookingRequest } from './booking-routes.ts';
 
 const { port, baseURL } = readEnvironment();
 type Task = { id: string; title: string; priority: 'normal' | 'high'; done: boolean };
@@ -25,7 +26,7 @@ function loginPage(error = '') {
 }
 function board(session: Session, error = '') {
   const editor = session.role === 'editor';
-  return document(`<h1>Task Board</h1><p>Signed in as ${session.role}</p>${error ? `<p role="alert">${escapeHtml(error)}</p>` : ''}${editor ? `<form method="post" action="/tasks"><label>Task title <input name="title" required maxlength="80"></label><label for="task-priority">Priority</label><select id="task-priority" name="priority"><option value="normal">Normal</option><option value="high">High</option></select><button>Add task</button></form>` : ''}<table aria-label="Tasks"><thead><tr><th>Title</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead><tbody>${session.tasks.map(t => `<tr><th scope="row">${escapeHtml(t.title)}</th><td>${t.priority}</td><td>${t.done ? 'Done' : 'Open'}</td><td>${editor ? `<form method="post" action="/tasks/${t.id}/complete"><button ${t.done ? 'disabled' : ''}>Complete</button></form>` : ''}</td></tr>`).join('')}</tbody></table><form method="post" action="/logout"><button>Sign out</button></form>`);
+  return document(`<h1>Task Board</h1><a href="/bookings">Bookings</a><p>Signed in as ${session.role}</p>${error ? `<p role="alert">${escapeHtml(error)}</p>` : ''}${editor ? `<form method="post" action="/tasks"><label>Task title <input name="title" required maxlength="80"></label><label for="task-priority">Priority</label><select id="task-priority" name="priority"><option value="normal">Normal</option><option value="high">High</option></select><button>Add task</button></form>` : ''}<table aria-label="Tasks"><thead><tr><th>Title</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead><tbody>${session.tasks.map(t => `<tr><th scope="row">${escapeHtml(t.title)}</th><td>${t.priority}</td><td>${t.done ? 'Done' : 'Open'}</td><td>${editor ? `<form method="post" action="/tasks/${t.id}/complete"><button ${t.done ? 'disabled' : ''}>Complete</button></form>` : ''}</td></tr>`).join('')}</tbody></table><form method="post" action="/logout"><button>Sign out</button></form>`);
 }
 
 async function fields(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -62,6 +63,7 @@ const server = createServer(async (req, res) => {
     if (method !== 'GET' && req.headers.origin && req.headers.origin !== baseURL) {
       json(res, 403, { error: 'Origin not allowed.' }); return;
     }
+    if (await handleBookingRequest(req, res, { path, method, session, baseURL })) return;
     const html = (code: number, value: string) => {
       res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(value);
     };
