@@ -1,5 +1,8 @@
 # Playwright Starter
 
+
+Looking for a control or storage pattern? Start with the [reusable pattern guide](PATTERNS.md): dropdowns, token multi-selects, calendars, checkbox groups, paged tables, file handling, dialogs, new tabs, frames, and browser state, with working page-object examples and cross-browser tests.
+
 [![Verify](https://github.com/PrakashgoudaAI/playwright-starter/actions/workflows/verify.yml/badge.svg)](https://github.com/PrakashgoudaAI/playwright-starter/actions/workflows/verify.yml)
 
 A TypeScript test project built around a small task board. It covers browser workflows and the API behind them: signing in, creating tasks, enforcing viewer permissions, and invalidating sessions on logout.
@@ -30,7 +33,7 @@ For API checks without a browser, run `npm run test:api`. To explore the app, ru
 - **Input handling:** invalid task data, malformed JSON, foreign browser origins, and rendering task titles as text.
 - **Configuration:** invalid port values fail before the server starts.
 
-There are 11 API/configuration checks and 6 browser scenarios run in both Chromium and Firefox: 23 checks in total. Viewer permissions include rejected create and complete requests, with task data unchanged after a rejected completion. The workflow badge links to the actual run history.
+There are Task-board coverage includes API/configuration checks and browser workflows. The reusable control and storage scenarios run alongside these in both Chromium and Firefox.rmissions include rejected create and complete requests, with task data unchanged after a rejected completion. The workflow badge links to the actual run history.
 
 ## Design decisions
 
