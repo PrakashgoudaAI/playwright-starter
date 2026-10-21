@@ -34,7 +34,7 @@ export class SearchCombobox {
   }
 }
 
-/** Explicit choices keep label ownership in the page object, not in DOM guessing. */
+/** Binary native checkboxes. Map mixed-state controllers separately. */
 export class CheckboxGroup<K extends string> {
   constructor(private readonly choices: Readonly<Record<K, Locator>>) {}
 
@@ -48,6 +48,9 @@ export class CheckboxGroup<K extends string> {
     // Validate every choice before changing any control. A later UI failure is not rolled back.
     for (const [key, control] of Object.entries(this.choices) as [K, Locator][]) {
       await expect(control).toHaveCount(1);
+      const binary = await control.evaluate(element =>
+        element instanceof HTMLInputElement && element.type === 'checkbox' && !element.indeterminate);
+      if (!binary) throw new Error('CheckboxGroup requires binary native checkboxes.');
       const checked = desired.has(key);
       const enabled = await control.isEnabled();
       if (!enabled && await control.isChecked() !== checked) {
