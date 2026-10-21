@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID } from 'node:crypto';
 import { accounts, type Role } from './accounts.ts';
 import { readEnvironment } from '../../src/config/environment.ts';
+import { handleBookingRequest } from './booking-routes.ts';
 
 const { port, baseURL } = readEnvironment();
 type Task = { id: string; title: string; priority: 'normal' | 'high'; done: boolean };
@@ -62,6 +63,7 @@ const server = createServer(async (req, res) => {
     if (method !== 'GET' && req.headers.origin && req.headers.origin !== baseURL) {
       json(res, 403, { error: 'Origin not allowed.' }); return;
     }
+    if (await handleBookingRequest(req, res, { path, method, session, baseURL })) return;
     const html = (code: number, value: string) => {
       res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(value);
     };
