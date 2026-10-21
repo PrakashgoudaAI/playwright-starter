@@ -46,14 +46,18 @@ export class PreferencesPage {
   }
 
   async exportPreferences(): Promise<Download> {
-    const download = this.page.waitForEvent('download');
-    await this.page.getByRole('link', { name: 'Export preferences', exact: true }).click();
+    const [download] = await Promise.all([
+      this.page.waitForEvent('download'),
+      this.page.getByRole('link', { name: 'Export preferences', exact: true }).click(),
+    ]);
     return download;
   }
 
   async openHelp(): Promise<Page> {
-    const popup = this.page.waitForEvent('popup');
-    await this.page.getByRole('button', { name: 'Open help', exact: true }).click();
+    const [popup] = await Promise.all([
+      this.page.waitForEvent('popup'),
+      this.page.getByRole('button', { name: 'Open help', exact: true }).click(),
+    ]);
     return popup;
   }
 
