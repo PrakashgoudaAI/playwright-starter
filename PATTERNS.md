@@ -13,7 +13,7 @@ npm run check
 npx playwright test tests/patterns
 ```
 
-The existing configuration starts the local demo server and runs the pattern tests in Chromium and Firefox. Run both pattern files with `npx playwright test tests/patterns`. No external website, account, or API key is needed. To inspect one browser interactively:
+The existing configuration starts the local demo server and runs the pattern tests in Chromium and Firefox. Run all pattern files with `npx playwright test tests/patterns`. No external website, account, or API key is needed. To inspect one browser interactively:
 
 ```sh
 npx playwright test tests/patterns/control-patterns.ui.spec.ts --project=chromium --ui
@@ -33,6 +33,8 @@ npx playwright test tests/patterns/control-patterns.ui.spec.ts --project=chromiu
 | Confirmation dialog | [PreferencesPage](src/pages/preferences-page.ts) | Scope the action to the named HTML dialog, not another matching button. |
 | New tab | [PreferencesPage](src/pages/preferences-page.ts) | Register the popup listener before clicking; close the page after use. |
 | Embedded form | [PreferencesPage](src/pages/preferences-page.ts) | Use a frame locator with an explicit frame boundary. |
+| Token multi-select | [TokenMultiSelect](src/components/token-multi-select.ts) | Replace the complete selection in a fully loaded ARIA listbox; explicit names and disabled choices. |
+| Custom date calendar | [CalendarPicker](src/components/calendar-picker.ts) | Validate date-only ISO values and navigate a bounded number of months. |
 | Paged tables | [PaginatedTable](src/components/paginated-table.ts) and [OrdersPage](src/pages/orders-page.ts) | Exact row keys, explicit readiness, and bounded searches across pages. |
 | Table filters and sorting | [OrdersPage](src/pages/orders-page.ts) | Wait for committed rows; keep query and column behavior application-specific. |
 | Browser storage | [browser-storage](src/support/browser-storage.ts) | Seed missing keys before navigation, restricted to one HTTP(S) origin. |
@@ -105,7 +107,7 @@ The cases check the supported DOM contracts in Chromium and Firefox. They do not
 
 ## Boundaries and next additions
 
-These examples cover common controls, conventional paged tables, and browser state. They do not yet cover custom calendar widgets, virtualized grids, drag-and-drop, shadow DOM, complex multi-selects, SSO/MFA, or WebKit. Add an adapter when there is a concrete widget contract to test. Avoid a universal BasePage with guessed selectors, fixed sleeps, swallowed failures, or forced clicks.
+These examples cover common controls, paged tables, a token multi-select, a single-date calendar, and browser state. They do not yet cover date ranges, time pickers, virtualized grids, drag-and-drop, shadow DOM, async/virtualized multi-selects, SSO/MFA, or WebKit. Add an adapter when there is a concrete widget contract to test. Avoid a universal BasePage with guessed selectors, fixed sleeps, swallowed failures, or forced clicks.
 
 When adding a pattern, include a working view, a positive case, an important failure case, and the limits a reader needs before copying it. Useful examples should be easy to run and easy to remove when the application has a simpler direct Playwright call.
 
@@ -126,3 +128,35 @@ The readiness callback is part of the application contract. Resolve only after r
 Amount sorting is deliberately a two-state ascending/descending header in this view. The tests compare numeric amounts and verify that requesting the current direction does not reload the table. A three-state header, server cursor, infinite scroll, or virtualized grid needs a different adapter. Row actions may remove a row from a filtered result set, so the page object does not assume that an approved row must remain visible.
 
 The [table tests](tests/patterns/table-patterns.ui.spec.ts) intercept a small simulated API with per-test records. They cover exact and off-page matches, filtering, sorting, row removal, missing and duplicate keys, invalid/exhausted budgets, a pagination loop, and a failed request that retains stale rows. The [view](examples/patterns/orders-view.ts) makes real browser fetch calls to those intercepted routes. This is a component-contract test, not coverage of a real order service, authorization, or backend persistence.
+
+
+## Token multi-select: replace the selection, do not keep toggling
+
+[BookingPage](src/pages/booking-page.ts) maps stable keys to unique option names. [TokenMultiSelect](src/components/token-multi-select.ts) owns the interaction with a fully loaded, non-virtualized ARIA listbox. Unlike a native multi-select, this widget exposes aria-selected on each option and a separate Done button. Its options can be portalled outside the page section.
+
+```ts
+await booking.participants.setSelected(['alice-jones', 'bob']);
+await booking.participants.setSelected([]);
+```
+
+The supplied name map must describe the complete option set. The helper checks the option count and exact names; Alice must not match Alice Jones. It validates every option's binary selection state and checks disabled choices before changing one. Repeating a selection must not toggle those options off. Duplicate or unknown keys and duplicate configured names fail before the panel opens.
+
+A preflight error after opening the panel leaves it open for investigation but does not change the selection. An interaction that fails later is not rolled back. A successful operation closes the panel and checks aria-expanded. Adapters for asynchronous search, virtual scrolling, remote suggestions, or a different close/commit model should be separate; increasing timeouts does not make this contract fit them.
+
+The view includes exact token removal, keyboard option navigation that skips disabled choices, Space activation, and Escape dismissal with focus restoration. The tests exercise those behaviors. They are not a full accessibility audit or a replacement for testing with assistive technology.
+
+## Calendar: date-only values, bounded navigation
+
+[CalendarPicker](src/components/calendar-picker.ts) works with a single-date Gregorian calendar: a dialog, previous/next buttons, a YYYY-MM month marker, and one uniquely named button per full YYYY-MM-DD date. Adjacent-month buttons may share day numbers, so locating a button by just 1 or 29 is intentionally avoided.
+
+```ts
+await booking.startDate.choose('2028-02-29', 0);
+```
+
+The optional budget limits month moves, not the day number (default 12, supported range 0–120). Invalid dates, including impossible leap days, fail before opening the calendar. A target beyond the budget opens the panel to read its current month but does not navigate. Each navigation must advance exactly one month; disabled navigation and unexpected jumps fail without selecting a day. An unavailable day cannot overwrite the saved value. Navigation failures can leave the panel at the last visited month; they are not transactional.
+
+The selected value remains a date-only string. The helper does not convert it through a timezone-dependent Date object. The synthetic view uses fixed 2028–2029 bounds, UTC month rendering, and one unavailable date so tests do not depend on today's date or the machine clock. Cases include a leap day, Gregorian century rules, a year boundary, backward navigation, month budgets, disabled dates, a faulty two-month jump, cancellation, keyboard day activation, and a non-UTC browser context.
+
+Only button activation and Escape/focus behavior are demonstrated for the calendar. A complete calendar-grid keyboard model, localized/non-Gregorian calendars, date ranges, and time selection need their own contracts and tests. The month marker must update after the new month's controls are committed; add an application-specific readiness check if your widget fetches availability asynchronously.
+
+Run [booking-patterns.ui.spec.ts](tests/patterns/booking-patterns.ui.spec.ts) to see the calls and their observable results. Its [synthetic view](examples/patterns/booking-view.ts) is a test fixture, not a published booking product or a UI component package to ship to users.
