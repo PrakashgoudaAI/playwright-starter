@@ -1,0 +1,26 @@
+:root { color-scheme: light dark; font: 16px/1.5 system-ui, sans-serif; }
+body { margin: 0; background: Canvas; color: CanvasText; }
+main { max-width: 64rem; margin: 2rem auto; padding: 0 1rem; }
+header { border-bottom: 1px solid GrayText; padding-bottom: 1rem; }
+header form { display: inline; margin-left: 1rem; }
+#booking-form { max-width: 36rem; padding: 1rem 0; }
+#booking-form > label { display: block; margin-top: .75rem; }
+input { font: inherit; padding: .5rem; max-width: 100%; box-sizing: border-box; }
+#booking-title { width: 100%; }
+button { font: inherit; padding: .4rem .7rem; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid Highlight; outline-offset: 3px; }
+fieldset { margin: 1rem 0; }
+.actions, nav, .month-nav { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; }
+#tokens span { display: inline-block; border: 1px solid GrayText; border-radius: .4rem; margin: .3rem; padding: .25rem; }
+#people-options { display: flex; flex-direction: column; gap: .3rem; }
+[role="option"][aria-selected="true"] { outline: 2px solid Highlight; }
+.picker { position: fixed; inset: 20% auto auto 10%; z-index: 2; background: Canvas; border: 2px solid GrayText; padding: 1rem; box-shadow: 0 1rem 3rem #0004; }
+[hidden] { display: none !important; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .6rem; border-bottom: 1px solid GrayText; overflow-wrap: anywhere; }
+[role="alert"] { border-left: .3rem solid #bd3434; padding: .75rem; }
+dialog { max-width: 32rem; border: 1px solid GrayText; border-radius: .5rem; }
+dialog::backdrop { background: #0007; }
+.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: .3rem; margin: 1rem 0; }
+@media (max-width: 40rem) { .month-nav { flex-wrap: wrap; } th, td { padding: .35rem; } }
