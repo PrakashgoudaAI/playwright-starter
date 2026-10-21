@@ -19,7 +19,8 @@ test('booking creation returns the canonical record and supports reading it back
 
 test('unauthenticated API access is rejected and the booking page redirects to sign-in', async ({ playwright, baseURL }) => {
   if (!baseURL) throw new Error('A base URL is required.');
-  const outsider = await playwright.request.newContext({ baseURL });
+  // Do not inherit the authenticated test's storageState in this negative client.
+  const outsider = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
   try {
     for (const path of ['/api/bookings', '/api/bookings/options', '/api/bookings/' + randomUUID()]) expect((await outsider.get(path)).status()).toBe(401);
     expect((await outsider.post('/api/bookings', { headers: headers(), data: draft })).status()).toBe(401);
@@ -84,7 +85,8 @@ test('sessions cannot read each other records or idempotency entries', async ({ 
   const created = await request.post('/api/bookings', { headers: key, data: draft }); expect(created.status()).toBe(201);
   const ownerRecord = await created.json() as Booking;
   if (!baseURL) throw new Error('A base URL is required.');
-  const other = await playwright.request.newContext({ baseURL });
+  // A second sign-in must not carry the owner cookie and rotate the owner's session.
+  const other = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
   try {
     await signIn(other, 'editor');
     expect((await other.get('/api/bookings/' + ownerRecord.id)).status()).toBe(404);
