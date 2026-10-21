@@ -4,6 +4,11 @@ export const participantNames = Object.freeze({ alice: 'Alice', 'alice-jones': '
 export type Participant = keyof typeof participantNames;
 export type BookingInput = { title: string; startDate: string; participants: Participant[] };
 export type Booking = BookingInput & { id: string; reference: string };
+export type BookingOptions = { participants: { id: Participant; name: string; available: boolean }[]; minDate: string; maxDate: string; unavailableDates: string[] };
+export const bookingOptions: BookingOptions = {
+  participants: (Object.keys(participantNames) as Participant[]).map(id => ({ id, name: participantNames[id], available: id !== 'evan' })),
+  minDate: '2028-01-01', maxDate: '2029-12-31', unavailableDates: ['2028-02-14'],
+};
 
 export class BookingProblem extends Error {
   readonly status: number;
@@ -34,12 +39,12 @@ export function parseBooking(value: unknown): BookingInput {
     throw new BookingProblem(400, 'Use a booking title of 1–80 characters.');
   }
   if (typeof data.startDate !== 'string' || !validDate(data.startDate) ||
-      data.startDate < '2028-01-01' || data.startDate > '2029-12-31' || data.startDate === '2028-02-14') {
+      data.startDate < bookingOptions.minDate || data.startDate > bookingOptions.maxDate || bookingOptions.unavailableDates.includes(data.startDate)) {
     throw new BookingProblem(400, 'Choose an available date in the 2028–2029 demo window.');
   }
   const people = data.participants;
   if (!Array.isArray(people) || people.length < 1 || people.length > 3 || new Set(people).size !== people.length ||
-      people.some(person => typeof person !== 'string' || !Object.hasOwn(participantNames, person) || person === 'evan')) {
+      people.some(person => typeof person !== 'string' || !bookingOptions.participants.some(option => option.id === person && option.available))) {
     throw new BookingProblem(400, 'Choose 1–3 distinct available participants.');
   }
   return { title: data.title.trim(), startDate: data.startDate, participants: [...people].sort() as Participant[] };
