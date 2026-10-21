@@ -149,6 +149,8 @@ The view includes exact token removal, keyboard option navigation that skips dis
 
 [CalendarPicker](src/components/calendar-picker.ts) works with a single-date Gregorian calendar: a dialog, previous/next buttons, a YYYY-MM month marker, and one uniquely named button per full YYYY-MM-DD date. Adjacent-month buttons may share day numbers, so locating a button by just 1 or 29 is intentionally avoided.
 
+The input and dialog deliberately share the Start date name. BookingPage intersects the field label with an input locator and exposes startDateValue for assertions. An exact label alone is not enough when more than one element has that accessible name.
+
 ```ts
 await booking.startDate.choose('2028-02-29', 0);
 ```
