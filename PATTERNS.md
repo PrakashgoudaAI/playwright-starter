@@ -10,10 +10,10 @@ Use the Node version specified in package.json. From a fresh checkout:
 npm ci
 npx playwright install --with-deps chromium firefox
 npm run check
-npx playwright test tests/patterns/control-patterns.ui.spec.ts
+npx playwright test tests/patterns
 ```
 
-The existing configuration starts the local demo server and runs the pattern tests in Chromium and Firefox. No external website, account, or API key is needed. To inspect one browser interactively:
+The existing configuration starts the local demo server and runs the pattern tests in Chromium and Firefox. Run both pattern files with `npx playwright test tests/patterns`. No external website, account, or API key is needed. To inspect one browser interactively:
 
 ```sh
 npx playwright test tests/patterns/control-patterns.ui.spec.ts --project=chromium --ui
@@ -33,6 +33,8 @@ npx playwright test tests/patterns/control-patterns.ui.spec.ts --project=chromiu
 | Confirmation dialog | [PreferencesPage](src/pages/preferences-page.ts) | Scope the action to the named HTML dialog, not another matching button. |
 | New tab | [PreferencesPage](src/pages/preferences-page.ts) | Register the popup listener before clicking; close the page after use. |
 | Embedded form | [PreferencesPage](src/pages/preferences-page.ts) | Use a frame locator with an explicit frame boundary. |
+| Paged tables | [PaginatedTable](src/components/paginated-table.ts) and [OrdersPage](src/pages/orders-page.ts) | Exact row keys, explicit readiness, and bounded searches across pages. |
+| Table filters and sorting | [OrdersPage](src/pages/orders-page.ts) | Wait for committed rows; keep query and column behavior application-specific. |
 | Browser storage | [browser-storage](src/support/browser-storage.ts) | Seed missing keys before navigation, restricted to one HTTP(S) origin. |
 | Authenticated tests | [existing fixtures](src/fixtures/test.ts) | Create a test session through the demo API and reuse its in-memory storage state. |
 
@@ -66,6 +68,8 @@ Adjust import paths for your project. Map your application's real accessible nam
 `NativeSelect` is for HTML `select` elements. `SearchCombobox` is for an editable input that filters a list of ARIA options. It accepts the listbox separately so the list can live in a portal. It does not implement virtual scrolling, multi-value tokens, or a read-only combobox. Give those widgets their own small adapter and tests rather than adding arbitrary fallbacks.
 
 ### Checkbox replacement has a clear meaning
+
+`CheckboxGroup` supports binary native checkboxes. Mixed-state controllers and custom ARIA checkboxes need separate adapters; preflight rejects them rather than quietly leaving a mixed state unchanged.
 
 `setSelected(['email'])` checks email and clears the other mapped choices. Repeating the call has the same result. An unknown key, duplicate key, or an incompatible disabled choice fails before any selection is changed. A failure that occurs later during interaction is not rolled back; the operation is not a transaction. Controls that become enabled asynchronously need an application-specific readiness check before calling it.
 
@@ -101,6 +105,24 @@ The cases check the supported DOM contracts in Chromium and Firefox. They do not
 
 ## Boundaries and next additions
 
-This first set covers common controls and browser state. It does not yet cover custom calendar widgets, virtualized grids, pagination, drag-and-drop, shadow DOM, complex multi-selects, SSO/MFA, or WebKit. Add an adapter when there is a concrete widget contract to test. Avoid a universal BasePage with guessed selectors, fixed sleeps, swallowed failures, or forced clicks.
+These examples cover common controls, conventional paged tables, and browser state. They do not yet cover custom calendar widgets, virtualized grids, drag-and-drop, shadow DOM, complex multi-selects, SSO/MFA, or WebKit. Add an adapter when there is a concrete widget contract to test. Avoid a universal BasePage with guessed selectors, fixed sleeps, swallowed failures, or forced clicks.
 
 When adding a pattern, include a working view, a positive case, an important failure case, and the limits a reader needs before copying it. Useful examples should be easy to run and easy to remove when the application has a simpler direct Playwright call.
+
+
+## Paged tables: search a key, not a row number
+
+[OrdersPage](src/pages/orders-page.ts) supplies the named table, First/Next controls, a visible page marker, and a readiness callback to [PaginatedTable](src/components/paginated-table.ts). A row is identified by an exact, unique rowheader key. ORD-10 must not match ORD-100. Business actions stay in the page object:
+
+```ts
+await orders.filterStatus('open');
+await orders.approve('ORD-400', 10);
+```
+
+The search resets to the first page of the current filter and sort, then scans at most the supplied budget (default 20, supported range 1–100). It stops on the last page, an ambiguous key on the current page, a repeated marker, or a load failure. It never chooses the first duplicate or retries an action against a guessed row. Keys must be unique within the result set; the helper does not scan later pages to prove global uniqueness after finding a match.
+
+The readiness callback is part of the application contract. Resolve only after rows, navigation controls, and the page marker are committed. Reject an error state even if old rows remain visible. This example uses data-state and aria-busy; use your application's own explicit signals when adapting it. A click completing or a spinner disappearing is not proof that the requested data loaded successfully. A page marker must change after moving between pages. A stalled marker fails through Playwright's assertion timeout.
+
+Amount sorting is deliberately a two-state ascending/descending header in this view. The tests compare numeric amounts and verify that requesting the current direction does not reload the table. A three-state header, server cursor, infinite scroll, or virtualized grid needs a different adapter. Row actions may remove a row from a filtered result set, so the page object does not assume that an approved row must remain visible.
+
+The [table tests](tests/patterns/table-patterns.ui.spec.ts) intercept a small simulated API with per-test records. They cover exact and off-page matches, filtering, sorting, row removal, missing and duplicate keys, invalid/exhausted budgets, a pagination loop, and a failed request that retains stale rows. The [view](examples/patterns/orders-view.ts) makes real browser fetch calls to those intercepted routes. This is a component-contract test, not coverage of a real order service, authorization, or backend persistence.
