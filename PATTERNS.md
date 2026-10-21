@@ -95,7 +95,7 @@ Local storage is shared by pages within that context and origin. Session storage
 
 ## What these tests prove
 
-The [synthetic view](examples/patterns/preferences-view.ts) deliberately includes two Email checkboxes in different groups, East and East Coast options, a disabled choice, and a mixed select-all state. This makes incorrect scoping and prefix matching visible. The view is mounted with `page.setContent` on the local demo origin; it is not a deployed application or a backend integration test.
+The [synthetic view](examples/patterns/preferences-view.ts) deliberately includes two Email checkboxes in different groups, East and East Coast options, a disabled choice, and a mixed select-all state. This makes incorrect scoping and prefix matching visible. The view is served through a test-only Playwright route on the local demo origin, separate from the demo application's security headers; it is not a deployed application or a backend integration test.
 
 The cases check the supported DOM contracts in Chromium and Firefox. They do not certify another application's accessibility, authentication, performance, or production readiness. The existing task-board UI and API tests cover a separate demo workflow.
 
