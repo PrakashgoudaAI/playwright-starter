@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking reference workflow</title><link rel="stylesheet" href="/assets/booking.css"><script type="module" src="/assets/booking.js"></script></head>
+<body><main><header><h1>Bookings</h1><p>Local reference workflow. Public demo accounts and synthetic records only.</p>
+<a href="/board">Task board</a><form method="post" action="/logout"><button>Sign out</button></form></header>
+<p id="session-role">Loading session…</p>
+<form id="booking-form" aria-label="Booking draft" aria-busy="false" novalidate hidden>
+<label for="booking-title">Booking title</label><input id="booking-title" maxlength="80" autocomplete="off">
+<fieldset><legend>Participants</legend><button type="button" id="people-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="people-options">Choose participants</button>
+<section aria-label="Selected participants" id="tokens"></section></fieldset>
+<label for="start-date">Start date</label><input id="start-date" readonly>
+<button type="button" id="date-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="calendar">Choose start date</button>
+<div class="actions"><button type="submit" id="save">Save booking</button><button type="button" id="new-draft">New draft</button></div>
+</form>
+<p role="status" aria-label="Booking result" id="result"></p><p role="alert" id="error" hidden></p>
+<table aria-label="Bookings" aria-busy="true" data-state="loading"><thead><tr><th scope="col">Reference</th><th scope="col">Title</th><th scope="col">Date</th><th scope="col">Participants</th></tr></thead><tbody id="booking-rows"></tbody></table>
+<nav aria-label="Booking pagination"><button id="first-page" disabled>First page</button><p role="status" aria-label="Booking page" id="page-marker"></p><button id="next-page" disabled>Next page</button></nav>
+</main>
+<div id="people-popup" class="picker" hidden><div id="people-options" role="listbox" aria-label="Participants" aria-multiselectable="true" aria-busy="false"></div><button id="people-done">Done choosing participants</button></div>
+<dialog id="calendar" aria-labelledby="calendar-title"><h2 id="calendar-title">Start date</h2><div class="month-nav"><button id="previous-month">Previous month</button><p role="status" aria-label="Calendar month" id="month"></p><button id="next-month">Next month</button></div>
+<div class="days" role="group" aria-label="Calendar days" id="days"></div><button id="cancel-date">Cancel date selection</button></dialog>
+</body></html>
