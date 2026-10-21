@@ -90,18 +90,18 @@ test('removing one token does not remove a similarly named participant', async (
 
 test('a leap day is selected by its full date without navigating another month', async ({ page, booking }) => {
   await booking.startDate.choose('2028-02-29', 0);
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('2028-02-29');
+  await expect(booking.startDateValue).toHaveValue('2028-02-29');
   await expect(page.getByRole('dialog', { name: 'Start date' })).toBeHidden();
 });
 
 test('forward navigation crosses a year boundary without selecting an adjacent-month day', async ({ page, booking }) => {
   await booking.startDate.choose('2029-01-05');
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('2029-01-05');
+  await expect(booking.startDateValue).toHaveValue('2029-01-05');
 });
 
 test('backward navigation selects the exact date in the previous month', async ({ page, booking }) => {
   await booking.startDate.choose('2028-01-05');
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('2028-01-05');
+  await expect(booking.startDateValue).toHaveValue('2028-01-05');
 });
 
 test('malformed and impossible dates fail before opening the calendar', async ({ page, booking }) => {
@@ -109,7 +109,7 @@ test('malformed and impossible dates fail before opening the calendar', async ({
     await expect(booking.startDate.choose(value)).rejects.toThrow('valid YYYY-MM-DD');
   }
   await expect(page.getByRole('button', { name: 'Choose start date', exact: true })).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('');
+  await expect(booking.startDateValue).toHaveValue('');
 });
 
 test('a leap century is valid even when outside the allowed navigation budget', async ({ page, booking }) => {
@@ -124,19 +124,19 @@ test('invalid or insufficient month budgets do not navigate the calendar', async
   await expect(page.getByRole('button', { name: 'Choose start date', exact: true })).toHaveAttribute('aria-expanded', 'false');
   await expect(booking.startDate.choose('2029-01-05', 2)).rejects.toThrow('exceeds the month navigation budget');
   await expect(page.getByRole('status', { name: 'Calendar month' })).toHaveAttribute('data-month', '2028-02');
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('');
+  await expect(booking.startDateValue).toHaveValue('');
 });
 
 test('an unavailable date cannot overwrite the previous selection', async ({ page, booking }) => {
   await booking.startDate.choose('2028-02-29');
   await expect(booking.startDate.choose('2028-02-14')).rejects.toThrow('Date is not available');
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('2028-02-29');
+  await expect(booking.startDateValue).toHaveValue('2028-02-29');
 });
 
 test('calendar range limits stop navigation without changing the value', async ({ page, booking }) => {
   await expect(booking.startDate.choose('2027-12-31')).rejects.toThrow('outside the supported calendar range');
   await expect(page.getByRole('status', { name: 'Calendar month' })).toHaveAttribute('data-month', '2028-01');
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('');
+  await expect(booking.startDateValue).toHaveValue('');
 });
 
 test('Escape cancels the calendar and preserves the selected date', async ({ page, booking }) => {
@@ -145,7 +145,7 @@ test('Escape cancels the calendar and preserves the selected date', async ({ pag
   await trigger.click();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog', { name: 'Start date' })).toBeHidden();
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('2028-02-29');
+  await expect(booking.startDateValue).toHaveValue('2028-02-29');
   await expect(trigger).toBeFocused();
 });
 
@@ -156,7 +156,7 @@ test('a calendar day can be activated by keyboard and restores trigger focus', a
   const day = page.getByRole('dialog', { name: 'Start date' }).getByRole('button', { name: '2028-02-20', exact: true });
   await day.focus();
   await day.press('Enter');
-  await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('2028-02-20');
+  await expect(booking.startDateValue).toHaveValue('2028-02-20');
   await expect(trigger).toBeFocused();
 });
 
@@ -164,7 +164,7 @@ test.describe('incorrect month movement', () => {
   test.use({ widgetMode: 'jumping-month' });
   test('unexpected two-month jumps fail without selecting a day', async ({ page, booking }) => {
     await expect(booking.startDate.choose('2028-03-10')).rejects.toThrow('did not move by one month');
-    await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('');
+    await expect(booking.startDateValue).toHaveValue('');
   });
 });
 
@@ -172,6 +172,6 @@ test.describe('date-only values outside UTC', () => {
   test.use({ timezoneId: 'America/Los_Angeles' });
   test('the selected date is not shifted to the previous local day', async ({ page, booking }) => {
     await booking.startDate.choose('2028-02-29');
-    await expect(page.getByLabel('Start date', { exact: true })).toHaveValue('2028-02-29');
+    await expect(booking.startDateValue).toHaveValue('2028-02-29');
   });
 });
