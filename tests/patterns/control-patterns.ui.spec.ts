@@ -5,8 +5,11 @@ import { captureSessionStorage, seedBrowserStorage } from '../../src/support/bro
 
 const test = base.extend<{ preferences: PreferencesPage }>({
   preferences: async ({ page }, use) => {
-    await page.goto('/login');
-    await page.setContent(preferencesView);
+    await page.route('**/patterns/preferences', route => route.fulfill({
+      contentType: 'text/html',
+      body: preferencesView,
+    }));
+    await page.goto('/patterns/preferences');
     await use(new PreferencesPage(page));
   },
 });
