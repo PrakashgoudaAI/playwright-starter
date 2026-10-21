@@ -5,13 +5,14 @@
 <a href="/board">Task board</a><form method="post" action="/logout"><button>Sign out</button></form></header>
 <p id="session-role">Loading session…</p>
 <form id="booking-form" aria-label="Booking draft" aria-busy="false" novalidate hidden>
+<fieldset id="draft-controls"><legend>New booking</legend>
 <label for="booking-title">Booking title</label><input id="booking-title" maxlength="80" autocomplete="off">
 <fieldset><legend>Participants</legend><button type="button" id="people-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="people-options">Choose participants</button>
 <section aria-label="Selected participants" id="tokens"></section></fieldset>
 <label for="start-date">Start date</label><input id="start-date" readonly>
 <button type="button" id="date-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="calendar">Choose start date</button>
 <div class="actions"><button type="submit" id="save">Save booking</button><button type="button" id="new-draft">New draft</button></div>
-</form>
+</fieldset></form>
 <p role="status" aria-label="Booking result" id="result"></p><p role="alert" id="error" hidden></p>
 <table aria-label="Bookings" aria-busy="true" data-state="loading"><thead><tr><th scope="col">Reference</th><th scope="col">Title</th><th scope="col">Date</th><th scope="col">Participants</th></tr></thead><tbody id="booking-rows"></tbody></table>
 <nav aria-label="Booking pagination"><button id="first-page" disabled>First page</button><p role="status" aria-label="Booking page" id="page-marker"></p><button id="next-page" disabled>Next page</button></nav>
