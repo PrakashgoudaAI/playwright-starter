@@ -1,7 +1,7 @@
 # Playwright Starter
 
 
-Looking for a control or storage pattern? Start with the [reusable pattern guide](PATTERNS.md): dropdowns, checkbox groups, file handling, dialogs, new tabs, frames, and browser state, with working page-object examples and cross-browser tests.
+Looking for a control or storage pattern? Start with the [reusable pattern guide](PATTERNS.md): dropdowns, checkbox groups, paged tables, file handling, dialogs, new tabs, frames, and browser state, with working page-object examples and cross-browser tests.
 
 [![Verify](https://github.com/PrakashgoudaAI/playwright-starter/actions/workflows/verify.yml/badge.svg)](https://github.com/PrakashgoudaAI/playwright-starter/actions/workflows/verify.yml)
 
