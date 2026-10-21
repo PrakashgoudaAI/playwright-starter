@@ -170,3 +170,33 @@ test('storage configuration rejects paths and non-string values before registrat
   await expect(seedBrowserStorage(context, { origin: 'file:///tmp' })).rejects.toThrow('requires an HTTP(S) origin');
   await expect(seedBrowserStorage(context, { origin: baseURL, local: { theme: 42 } as unknown as Record<string, string> })).rejects.toThrow('string-record limits');
 });
+
+
+test('unknown checkbox keys are rejected before changing any choice', async ({ page, preferences }) => {
+  await preferences.channels.setSelected(['email']);
+  await expect(preferences.channels.setSelected(['unexpected' as 'email'])).rejects.toThrow('Unknown checkbox choice');
+  await expect(page.getByRole('group', { name: 'Notification channels' }).getByRole('checkbox', { name: 'Email', exact: true })).toBeChecked();
+});
+
+test('mixed checkbox states are rejected during preflight', async ({ page, preferences }) => {
+  await preferences.channels.setSelected(['email']);
+  const group = page.getByRole('group', { name: 'Notification channels' });
+  await group.getByRole('checkbox', { name: 'SMS', exact: true }).evaluate(element => {
+    if (!(element instanceof HTMLInputElement)) throw new Error('Expected a native checkbox.');
+    element.indeterminate = true;
+  });
+  await expect(preferences.channels.setSelected([])).rejects.toThrow('binary native checkboxes');
+  await expect(group.getByRole('checkbox', { name: 'Email', exact: true })).toBeChecked();
+  await expect(group.getByRole('checkbox', { name: 'SMS', exact: true })).toHaveJSProperty('indeterminate', true);
+});
+
+test('a disabled choice already in the requested state is preserved', async ({ page, preferences }) => {
+  const group = page.getByRole('group', { name: 'Notification channels' });
+  await group.getByRole('checkbox', { name: 'Push', exact: true }).evaluate(element => {
+    if (!(element instanceof HTMLInputElement)) throw new Error('Expected a native checkbox.');
+    element.checked = true;
+  });
+  await preferences.channels.setSelected(['email', 'push']);
+  await expect(group.getByRole('checkbox', { name: 'Push', exact: true })).toBeChecked();
+  await expect(group.getByRole('checkbox', { name: 'Email', exact: true })).toBeChecked();
+});
