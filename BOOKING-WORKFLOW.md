@@ -48,6 +48,8 @@ The browser client is TypeScript checked by the existing check command. The Node
 
 A booking body contains title, startDate, and participants only. Titles are trimmed and limited to 80 characters. Dates must be valid Gregorian YYYY-MM-DD values within the fixed demo window and not blocked. Participants must be 1–3 distinct available IDs. Unknown fields and malformed page parameters are rejected. Request bodies are capped at 8 KiB; each session can create at most 100 bookings.
 
+The unauthenticated and secondary API clients explicitly start with empty cookie/origin storage state. A manually created client inside a configured test must not accidentally inherit the owner identity; signing in with that cookie could rotate the owner session.
+
 Viewers can read their own collection but cannot write. Two sign-ins, even with the same public account, own separate datasets. This is deliberate test isolation, not persistent account storage or a model of real booking permissions. Logout revokes access; the host's existing session expiry also applies. Records are lost on process restart.
 
 ## Duplicate requests and uncertain saves
