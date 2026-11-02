@@ -80,3 +80,7 @@ This is a focused starter, not a production authentication service. The demo has
 Chromium, Firefox, and WebKit are configured. SSO/MFA, visual baselines, full accessibility assessments, persistent databases, and Azure DevOps execution are not implemented. Broader permission boundaries and accessibility checks remain useful next additions.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and the [MIT license](LICENSE).
+
+## Sharded verification
+
+The reusable GitHub workflow runs two shards and requires their combined test IDs to match a separately generated suite plan. Missing results, skips and retries fail the completeness gate. HTML, JUnit and Allure reports are merged after execution. See [the run design and local evidence](docs/SHARDED-CI.md).

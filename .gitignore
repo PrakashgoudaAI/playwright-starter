@@ -10,3 +10,11 @@ allure-report/
 !.env.example
 .DS_Store
 *.tsbuildinfo
+
+quality-results/
+blob-report/
+merged-report/
+merged-results/
+merged-allure-results/
+
+merged-allure-report/
