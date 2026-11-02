@@ -33,7 +33,9 @@ For API checks without a browser, run `npm run test:api`. To explore the app, ru
 - **Input handling:** invalid task data, malformed JSON, foreign browser origins, and rendering task titles as text.
 - **Configuration:** invalid port values fail before the server starts.
 
-There are Task-board coverage includes API/configuration checks and browser workflows. The reusable control and storage scenarios run alongside these in both Chromium and Firefox.rmissions include rejected create and complete requests, with task data unchanged after a rejected completion. The workflow badge links to the actual run history.
+Viewer permission checks reject both task creation and completion, and verify that a rejected completion leaves the task unchanged.
+
+The [booking reference workflow](BOOKING-WORKFLOW.md) adds authenticated booking creation, API read-back, pagination, and recovery after a committed save loses its response. The reusable control and storage scenarios run alongside the task-board and booking workflows in Chromium and Firefox. The workflow badge links to the actual run history.
 
 ## Design decisions
 
