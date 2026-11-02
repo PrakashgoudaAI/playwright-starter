@@ -26,8 +26,10 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox
+      - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run check
+      - run: npm run lint
+      - run: npm run format:check
       - run: npm test
       - run: npm run report:allure
         if: ${{ !cancelled() }}
