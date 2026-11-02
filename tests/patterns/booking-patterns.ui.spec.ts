@@ -153,7 +153,7 @@ test('a calendar day can be activated by keyboard and restores trigger focus', a
   void booking;
   const trigger = page.getByRole('button', { name: 'Choose start date', exact: true });
   await trigger.click();
-  const day = page.getByRole('dialog', { name: 'Start date' }).getByRole('button', { name: '2028-02-20', exact: true });
+  const day = page.getByRole('dialog', { name: 'Start date' }).getByRole('button', { name: '20 (2028-02-20)', exact: true });
   await day.focus();
   await day.press('Enter');
   await expect(booking.startDateValue).toHaveValue('2028-02-20');
