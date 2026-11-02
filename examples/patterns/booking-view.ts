@@ -114,7 +114,7 @@ function renderMonth() {
     const iso = date.toISOString().slice(0, 10);
     const button = document.createElement('button');
     button.textContent = String(date.getUTCDate());
-    button.setAttribute('aria-label', iso);
+    button.setAttribute('aria-label', date.getUTCDate() + ' (' + iso + ')');
     button.disabled = date.getUTCMonth() !== month || iso === '2028-02-14';
     button.addEventListener('click', () => { dateValue.value = iso; closeCalendar(); });
     days.append(button);

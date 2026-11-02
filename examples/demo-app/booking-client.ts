@@ -122,7 +122,7 @@ function renderMonth() {
   days.replaceChildren(); const offset = (first.getUTCDay() + 6) % 7;
   for (let index = 0; index < 42; index++) {
     const date = new Date(Date.UTC(year, month, index - offset + 1)); const iso = date.toISOString().slice(0, 10);
-    const button = document.createElement('button'); button.type = 'button'; button.textContent = String(date.getUTCDate()); button.setAttribute('aria-label', iso);
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = String(date.getUTCDate()); button.setAttribute('aria-label', date.getUTCDate() + ' (' + iso + ')');
     button.disabled = date.getUTCMonth() !== month || iso < options.minDate || iso > options.maxDate || options.unavailableDates.includes(iso);
     button.addEventListener('click', () => { dateValue.value = iso; closeCalendar(); }); days.append(button);
   }

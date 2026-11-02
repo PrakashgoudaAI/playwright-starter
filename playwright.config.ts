@@ -30,6 +30,7 @@ export default defineConfig({
   projects: [
     { name: 'api', testMatch: /.*\.api\.spec\.ts/ },
     { name: 'chromium', testMatch: /.*\.ui\.spec\.ts/, use: devices['Desktop Chrome'] },
-    { name: 'firefox', testMatch: /.*\.ui\.spec\.ts/, use: devices['Desktop Firefox'] }
+    { name: 'firefox', testMatch: /.*\.ui\.spec\.ts/, use: devices['Desktop Firefox'] },
+    { name: 'webkit', testMatch: /.*\.ui\.spec\.ts/, use: devices['Desktop Safari'] }
   ]
 });

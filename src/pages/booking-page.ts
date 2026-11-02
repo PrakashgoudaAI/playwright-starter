@@ -28,7 +28,7 @@ export class BookingPage {
       previous: dialog.getByRole('button', { name: 'Previous month', exact: true }),
       next: dialog.getByRole('button', { name: 'Next month', exact: true }),
       value: this.startDateValue,
-      day: isoDate => dialog.getByRole('button', { name: isoDate, exact: true }),
+      day: isoDate => dialog.getByRole('button', { name: Number(isoDate.slice(8)) + ' (' + isoDate + ')', exact: true }),
     });
   }
 }
