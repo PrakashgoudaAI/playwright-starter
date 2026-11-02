@@ -13,7 +13,7 @@ Use Node.js 24 as required by package.json. From a fresh checkout:
 
 ```sh
 npm ci
-npx playwright install chromium firefox
+npx playwright install chromium firefox webkit
 npm run check
 npm test
 ```

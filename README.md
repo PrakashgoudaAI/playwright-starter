@@ -15,8 +15,10 @@ Use Node.js 24 and npm. From a fresh clone:
 
 ```sh
 npm ci
-npx playwright install chromium firefox
+npx playwright install chromium firefox webkit
 npm run check
+npm run lint
+npm run format:check
 npm test
 ```
 
@@ -35,7 +37,9 @@ For API checks without a browser, run `npm run test:api`. To explore the app, ru
 
 Viewer permission checks reject both task creation and completion, and verify that a rejected completion leaves the task unchanged.
 
-The [booking reference workflow](BOOKING-WORKFLOW.md) adds authenticated booking creation, API read-back, pagination, and recovery after a committed save loses its response. The reusable control and storage scenarios run alongside the task-board and booking workflows in Chromium and Firefox. The workflow badge links to the actual run history.
+The [booking reference workflow](BOOKING-WORKFLOW.md) adds authenticated booking creation, API read-back, pagination, and recovery after a committed save loses its response. The reusable control and storage scenarios run alongside the task-board and booking workflows in Chromium, Firefox, and WebKit. The workflow badge links to the actual run history.
+
+See the [accessibility and keyboard checks](docs/accessibility.md) for tested states, the calendar-label fix, and assessment limits.
 
 ## Design decisions
 
@@ -73,6 +77,6 @@ CI runs on pushes to `main`, pull requests, and manual dispatch. It uses two wor
 
 This is a focused starter, not a production authentication service. The demo has public plaintext credentials, in-memory data, HTTP-only local hosting, and no rate limiting or account recovery. Its cookie has `HttpOnly` and `SameSite=Strict`; it is not `Secure` because the app runs on local HTTP. Do not deploy it as a real service.
 
-Chromium and Firefox are configured; WebKit is not included yet. SSO/MFA, visual baselines, accessibility audits, persistent databases, and Azure DevOps execution are not implemented. Broader permission boundaries and accessibility checks remain useful next additions.
+Chromium, Firefox, and WebKit are configured. SSO/MFA, visual baselines, full accessibility assessments, persistent databases, and Azure DevOps execution are not implemented. Broader permission boundaries and accessibility checks remain useful next additions.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and the [MIT license](LICENSE).
