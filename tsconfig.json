@@ -11,5 +11,12 @@
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "examples/**/*.ts", "playwright.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "examples/**/*.ts",
+    "playwright.config.ts",
+    "scripts/**/*.ts",
+    "merge.config.ts"
+  ]
 }

@@ -15,8 +15,10 @@
     "test:smoke": "playwright test --grep @smoke",
     "report:allure": "allure generate allure-results --clean -o allure-report",
     "lint": "eslint .",
-    "format:check": "prettier --check tests/accessibility.ui.spec.ts eslint.config.mjs",
-    "format": "prettier --write tests/accessibility.ui.spec.ts eslint.config.mjs"
+    "format:check": "prettier --check tests/accessibility.ui.spec.ts tests/unit src/support/shard-gate.ts src/support/shard-reporter.ts scripts playwright.config.ts merge.config.ts eslint.config.mjs",
+    "format": "prettier --write tests/accessibility.ui.spec.ts tests/unit src/support/shard-gate.ts src/support/shard-reporter.ts scripts playwright.config.ts merge.config.ts eslint.config.mjs",
+    "test:gate": "node --test tests/unit/shard-gate.test.ts",
+    "check:shards": "node scripts/check-shards.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
