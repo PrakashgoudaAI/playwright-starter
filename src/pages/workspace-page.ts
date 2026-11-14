@@ -28,8 +28,9 @@ export class WorkspacePage {
   }
 
   async signOut(): Promise<void> {
-    await this.page
-      .getByRole("button", { name: "Sign out", exact: true })
-      .click();
+    await Promise.all([
+      this.page.waitForURL("**/login"),
+      this.page.getByRole("button", { name: "Sign out", exact: true }).click(),
+    ]);
   }
 }
