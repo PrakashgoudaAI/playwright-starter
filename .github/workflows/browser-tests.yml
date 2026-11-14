@@ -1,0 +1,122 @@
+name: Browser quality gates
+on:
+  workflow_call:
+    inputs:
+      browser:
+        type: string
+        default: all
+permissions:
+  contents: read
+env:
+  QUALITY_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+  BROWSER: ${{ inputs.browser }}
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check && npm run lint && npm run format:check && npm run test:gate
+      - run: |
+          case "$BROWSER" in
+            all) set -- ;;
+            chromium|firefox|webkit) set -- --project=api "--project=$BROWSER" ;;
+            *) exit 1 ;;
+          esac
+          PLAN_MANIFEST=quality-results/plan.json npx playwright test --list --reporter=./src/support/shard-reporter.ts "$@"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: test-plan
+          path: quality-results/plan.json
+          if-no-files-found: error
+          retention-days: 7
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: |
+          case "$BROWSER" in
+            all) set -- ;;
+            chromium|firefox|webkit) set -- --project=api "--project=$BROWSER" ;;
+            *) exit 1 ;;
+          esac
+          npx playwright test --shard=${{ matrix.shard }}/2 "$@"
+        env:
+          SHARD_MANIFEST: quality-results/shard-${{ matrix.shard }}.json
+          BLOB_DIR: quality-results/blob
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: ${{ !cancelled() }}
+        with:
+          name: shard-${{ matrix.shard }}
+          path: quality-results/
+          if-no-files-found: error
+          retention-days: 7
+  reports:
+    needs: [plan, tests]
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          name: test-plan
+          path: quality-results
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          pattern: shard-*
+          merge-multiple: true
+          path: quality-results
+      - run: npm run check:shards
+        id: completeness
+        continue-on-error: true
+      - run: npx playwright merge-reports --config=merge.config.ts quality-results/blob
+        if: ${{ !cancelled() }}
+      - run: npx allure generate quality-results/allure --clean -o merged-allure-report
+        if: ${{ !cancelled() }}
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: ${{ !cancelled() }}
+        with:
+          name: merged-test-reports
+          path: |
+            merged-report/
+            merged-results/
+            merged-allure-report/
+            quality-results/*.json
+          if-no-files-found: error
+          retention-days: 7
+      - run: test "$GATE_RESULT" = success
+        if: ${{ !cancelled() }}
+        env:
+          GATE_RESULT: ${{ steps.completeness.outcome }}
