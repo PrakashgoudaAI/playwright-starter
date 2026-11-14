@@ -1,92 +1,232 @@
-import { test, expect } from '@playwright/test';
-import { signIn } from '../src/api/demo-session.ts';
-import { accounts } from '../examples/demo-app/accounts.ts';
-import { readEnvironment } from '../src/config/environment.ts';
+import { test, expect } from "@playwright/test";
+import { signIn } from "../src/api/demo-session.ts";
+import { accounts } from "../examples/demo-app/accounts.ts";
+import { readEnvironment } from "../src/config/environment.ts";
 
-test.afterEach(async ({ request }) => { await request.delete('/api/session'); });
-
-test('@smoke rejects an unauthenticated API request', async ({ request }) => {
-  expect((await request.get('/api/tasks')).status()).toBe(401);
+test.afterEach(async ({ request }) => {
+  await request.delete("/api/session");
 });
 
-test('@smoke rejects incorrect credentials', async ({ request }) => {
-  const result = await request.post('/api/session', { data: { ...accounts.viewer, password: 'wrong-password' } });
+test("@smoke rejects an unauthenticated API request", async ({ request }) => {
+  expect((await request.get("/api/tasks")).status()).toBe(401);
+});
+
+test("@smoke rejects incorrect credentials", async ({ request }) => {
+  const result = await request.post("/api/session", {
+    data: { ...accounts.viewer, password: "wrong-password" },
+  });
   expect(result.status()).toBe(401);
-  expect((await request.get('/api/session')).status()).toBe(401);
+  expect((await request.get("/api/session")).status()).toBe(401);
 });
 
-test('@smoke viewer cannot create tasks even through the API', async ({ request }) => {
-  await signIn(request, 'viewer');
-  expect((await request.post('/api/tasks', { data: { title: 'Forbidden', priority: 'normal' } })).status()).toBe(403);
+test("@smoke viewer cannot create tasks even through the API", async ({
+  request,
+}) => {
+  await signIn(request, "viewer");
+  expect(
+    (
+      await request.post("/api/tasks", {
+        data: { title: "Forbidden", priority: "normal" },
+      })
+    ).status(),
+  ).toBe(403);
 });
 
-test('@smoke viewer cannot complete an existing task through the API', async ({ request }) => {
-  await signIn(request, 'viewer');
-  const before = await (await request.get('/api/tasks')).json();
+test("@smoke viewer cannot complete an existing task through the API", async ({
+  request,
+}) => {
+  await signIn(request, "viewer");
+  const before = await (await request.get("/api/tasks")).json();
   const task = before.tasks[0];
   expect(task.done).toBe(false);
   const result = await request.post(`/api/tasks/${task.id}/complete`);
   expect(result.status()).toBe(403);
-  expect(await result.json()).toEqual({ error: 'Editor role required.' });
-  expect(await (await request.get('/api/tasks')).json()).toEqual(before);
+  expect(await result.json()).toEqual({ error: "Editor role required." });
+  expect(await (await request.get("/api/tasks")).json()).toEqual(before);
 });
 
-test('@smoke editor can create, read and complete a task', async ({ request }) => {
-  await signIn(request, 'editor');
-  const result = await request.post('/api/tasks', { data: { title: 'Check release notes', priority: 'high' } });
+test("@smoke editor can create, read and complete a task", async ({
+  request,
+}) => {
+  await signIn(request, "editor");
+  const result = await request.post("/api/tasks", {
+    data: { title: "Check release notes", priority: "high" },
+  });
   expect(result.status()).toBe(201);
   const task = await result.json();
-  expect(task).toEqual({ id: expect.any(String), title: 'Check release notes', priority: 'high', done: false });
+  expect(task).toEqual({
+    id: expect.any(String),
+    title: "Check release notes",
+    priority: "high",
+    done: false,
+  });
   const complete = await request.post(`/api/tasks/${task.id}/complete`);
   expect(complete.status()).toBe(200);
   expect(await complete.json()).toEqual({ ...task, done: true });
-  expect((await (await request.get('/api/tasks')).json()).tasks).toContainEqual({ ...task, done: true });
+  expect((await (await request.get("/api/tasks")).json()).tasks).toContainEqual(
+    { ...task, done: true },
+  );
 });
 
-test('@smoke logout invalidates a previously issued cookie', async ({ request }) => {
-  await signIn(request, 'editor');
-  const cookie = (await request.storageState()).cookies.find(c => c.name === 'demo_session');
+test("@smoke logout invalidates a previously issued cookie", async ({
+  request,
+}) => {
+  await signIn(request, "editor");
+  const cookie = (await request.storageState()).cookies.find(
+    (c) => c.name === "demo_session",
+  );
   expect(cookie).toBeDefined();
-  expect((await request.delete('/api/session')).status()).toBe(204);
-  expect((await request.get('/api/tasks', { headers: { Cookie: `demo_session=${cookie!.value}` } })).status()).toBe(401);
+  expect((await request.delete("/api/session")).status()).toBe(204);
+  expect(
+    (
+      await request.get("/api/tasks", {
+        headers: { Cookie: `demo_session=${cookie!.value}` },
+      })
+    ).status(),
+  ).toBe(401);
 });
 
-test('@smoke rejects invalid task data without changing the dataset', async ({ request }) => {
-  await signIn(request, 'editor');
-  for (const data of [{ title: '', priority: 'normal' }, { title: 'x'.repeat(81), priority: 'normal' }, { title: 'Valid', priority: 'urgent' }]) {
-    expect((await request.post('/api/tasks', { data })).status()).toBe(400);
+test("@smoke rejects invalid task data without changing the dataset", async ({
+  request,
+}) => {
+  await signIn(request, "editor");
+  for (const data of [
+    { title: "", priority: "normal" },
+    { title: "x".repeat(81), priority: "normal" },
+    { title: "Valid", priority: "urgent" },
+  ]) {
+    expect((await request.post("/api/tasks", { data })).status()).toBe(400);
   }
-  expect((await (await request.get('/api/tasks')).json()).tasks).toHaveLength(1);
+  expect((await (await request.get("/api/tasks")).json()).tasks).toHaveLength(
+    1,
+  );
 });
 
-test('@smoke malformed JSON returns a client error', async ({ request }) => {
-  const result = await request.post('/api/session', { data: '{', headers: { 'Content-Type': 'application/json' } });
+test("@smoke malformed JSON returns a client error", async ({ request }) => {
+  const result = await request.post("/api/session", {
+    data: "{",
+    headers: { "Content-Type": "application/json" },
+  });
   expect(result.status()).toBe(400);
-  expect(await result.json()).toEqual({ error: 'Invalid request.' });
+  expect(await result.json()).toEqual({ error: "Invalid request." });
 });
 
-test('@smoke separates data between two simultaneous sessions', async ({ request, playwright, baseURL }) => {
-  if (!baseURL) throw new Error('Set baseURL before creating a demo session.');
+test("@smoke separates data between two simultaneous sessions", async ({
+  request,
+  playwright,
+  baseURL,
+}) => {
+  if (!baseURL) throw new Error("Set baseURL before creating a demo session.");
   const other = await playwright.request.newContext({ baseURL });
   try {
-    await signIn(request, 'editor');
-    await signIn(other, 'editor');
-    const created = await request.post('/api/tasks', { data: { title: 'Private to first session', priority: 'normal' } });
+    await signIn(request, "editor");
+    await signIn(other, "editor");
+    const created = await request.post("/api/tasks", {
+      data: { title: "Private to first session", priority: "normal" },
+    });
     expect(created.status()).toBe(201);
     const task = await created.json();
-    expect((await (await other.get('/api/tasks')).json()).tasks).toHaveLength(1);
-    expect((await other.post(`/api/tasks/${task.id}/complete`)).status()).toBe(404);
-  } finally { await other.delete('/api/session'); await other.dispose(); }
+    const owned = await request.get(`/api/tasks/${task.id}`);
+    expect(owned.status()).toBe(200);
+    expect(await owned.json()).toEqual(task);
+    expect((await (await other.get("/api/tasks")).json()).tasks).toHaveLength(
+      1,
+    );
+    const deniedRead = await other.get(`/api/tasks/${task.id}`);
+    expect(deniedRead.status()).toBe(404);
+    expect(await deniedRead.json()).toEqual({ error: "Task not found." });
+    expect((await other.post(`/api/tasks/${task.id}/complete`)).status()).toBe(
+      404,
+    );
+    expect(await (await request.get(`/api/tasks/${task.id}`)).json()).toEqual(
+      task,
+    );
+  } finally {
+    await other.delete("/api/session");
+    await other.dispose();
+  }
 });
 
-test('@smoke rejects browser requests from a different origin', async ({ request }) => {
-  const response = await request.post('/api/session', { data: accounts.viewer, headers: { Origin: 'https://untrusted.example' } });
+test("@smoke signing in again rotates the cookie and invalidates the old session", async ({
+  request,
+  playwright,
+  baseURL,
+}) => {
+  if (!baseURL) throw new Error("Set baseURL before creating a demo session.");
+  await signIn(request, "editor");
+  const oldState = await request.storageState();
+  const stale = await playwright.request.newContext({
+    baseURL,
+    storageState: oldState,
+  });
+  try {
+    const created = await request.post("/api/tasks", {
+      data: { title: "Old session only", priority: "normal" },
+    });
+    expect(created.status()).toBe(201);
+    await signIn(request, "viewer");
+    const oldCookie = oldState.cookies.find((c) => c.name === "demo_session");
+    const newCookie = (await request.storageState()).cookies.find(
+      (c) => c.name === "demo_session",
+    );
+    expect(oldCookie).toBeDefined();
+    expect(newCookie).toBeDefined();
+    expect(newCookie!.value).not.toBe(oldCookie!.value);
+    const rejected = await stale.get("/api/tasks");
+    expect(rejected.status()).toBe(401);
+    expect(await rejected.json()).toEqual({ error: "Sign in required." });
+    expect((await (await request.get("/api/tasks")).json()).tasks).toHaveLength(
+      1,
+    );
+    expect(
+      (
+        await request.post("/api/tasks", {
+          data: { title: "Denied", priority: "normal" },
+        })
+      ).status(),
+    ).toBe(403);
+  } finally {
+    await stale.dispose();
+  }
+});
+
+test("@smoke logging out one session does not invalidate another session", async ({
+  request,
+  playwright,
+  baseURL,
+}) => {
+  if (!baseURL) throw new Error("Set baseURL before creating a demo session.");
+  const other = await playwright.request.newContext({ baseURL });
+  try {
+    await signIn(request, "editor");
+    await signIn(other, "editor");
+    const before = await (await other.get("/api/tasks")).json();
+    expect((await request.delete("/api/session")).status()).toBe(204);
+    expect((await request.get("/api/tasks")).status()).toBe(401);
+    const retained = await other.get("/api/tasks");
+    expect(retained.status()).toBe(200);
+    expect(await retained.json()).toEqual(before);
+  } finally {
+    await other.delete("/api/session");
+    await other.dispose();
+  }
+});
+
+test("@smoke rejects browser requests from a different origin", async ({
+  request,
+}) => {
+  const response = await request.post("/api/session", {
+    data: accounts.viewer,
+    headers: { Origin: "https://untrusted.example" },
+  });
   expect(response.status()).toBe(403);
 });
 
-test('@smoke validates environment configuration before launching tests', () => {
-  expect(readEnvironment({ DEMO_PORT: '4300' }).baseURL).toBe('http://127.0.0.1:4300');
-  for (const value of ['0', 'abc', '65536', '1.5', '4173/board']) {
-    expect(() => readEnvironment({ DEMO_PORT: value })).toThrow('DEMO_PORT');
+test("@smoke validates environment configuration before launching tests", () => {
+  expect(readEnvironment({ DEMO_PORT: "4300" }).baseURL).toBe(
+    "http://127.0.0.1:4300",
+  );
+  for (const value of ["0", "abc", "65536", "1.5", "4173/board"]) {
+    expect(() => readEnvironment({ DEMO_PORT: value })).toThrow("DEMO_PORT");
   }
 });
