@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { WorkspacePage } from "../src/pages/workspace-page.ts";
 import { accounts } from "../examples/demo-app/accounts.ts";
 
 test("@smoke direct navigation requires sign-in", async ({ page }) => {
@@ -36,7 +37,9 @@ test("@smoke UI sign-in and sign-out enforce the route boundary", async ({
   await expect(
     page.getByText("Signed in as viewer", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await new WorkspacePage(page).signOut();
+  await expect(page).toHaveURL(/\/login$/);
+  expect((await page.request.get("/api/tasks")).status()).toBe(401);
   await page.goto("/board");
   await expect(page).toHaveURL(/\/login$/);
 });
