@@ -8,6 +8,12 @@ export default [
       "playwright-report/**",
       "allure-results/**",
       "allure-report/**",
+      "quality-results/**",
+      "blob-report/**",
+      "merged-report/**",
+      "merged-results/**",
+      "merged-allure-results/**",
+      "merged-allure-report/**",
     ],
   },
   {
@@ -15,6 +21,8 @@ export default [
       "src/**/*.ts",
       "tests/**/*.ts",
       "examples/**/*.ts",
+      "scripts/**/*.ts",
+      "merge.config.ts",
       "playwright.config.ts",
     ],
     languageOptions: {

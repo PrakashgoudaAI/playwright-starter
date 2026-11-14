@@ -69,7 +69,7 @@ npx playwright show-report
 npm run report:allure
 ```
 
-The Allure HTML command requires Java 17+ on `PATH` or via `JAVA_HOME`. GitHub Actions installs Java and generates that report after the test step. Its downloadable `test-reports` artifact includes all report formats and is retained for seven days. Allure results are cleared before each run to avoid mixing results from separate runs.
+The Allure HTML command requires Java 17+ on `PATH` or via `JAVA_HOME`. GitHub Actions installs Java and generates that report after the test step. Its downloadable `merged-test-reports` artifact includes all report formats and is retained for seven days. Allure results are cleared before each run to avoid mixing results from separate runs.
 
 CI runs on pushes to `main`, pull requests, and manual dispatch. It uses two workers, a read-only repository token, and actions pinned to commit revisions. Reports can contain cookies, request bodies, and page content: this workflow is suitable for these public synthetic accounts, not sensitive systems without a separate artifact policy.
 
@@ -77,10 +77,16 @@ CI runs on pushes to `main`, pull requests, and manual dispatch. It uses two wor
 
 This is a focused starter, not a production authentication service. The demo has public plaintext credentials, in-memory data, HTTP-only local hosting, and no rate limiting or account recovery. Its cookie has `HttpOnly` and `SameSite=Strict`; it is not `Secure` because the app runs on local HTTP. Do not deploy it as a real service.
 
-Chromium, Firefox, and WebKit are configured. SSO/MFA, visual baselines, full accessibility assessments, persistent databases, and Azure DevOps execution are not implemented. Broader permission boundaries and accessibility checks remain useful next additions.
+Chromium, Firefox, and WebKit are configured. SSO/MFA, visual baselines, full accessibility assessments, persistent databases, and Azure DevOps execution are not implemented. The included axe checks cover selected workflows and do not establish full WCAG conformance.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and the [MIT license](LICENSE).
 
 ## Sharded verification
 
 The reusable GitHub workflow runs two shards and requires their combined test IDs to match a separately generated suite plan. Missing results, skips and retries fail the completeness gate. HTML, JUnit and Allure reports are merged after execution. See [the run design and local evidence](docs/SHARDED-CI.md).
+
+## Complete verification
+
+Run `npm run verify` after installing dependencies and the three Playwright browsers. It checks types, lint, formatting, 12 unit tests and all 246 configured executions: 27 API checks plus 73 UI checks in Chromium, Firefox and WebKit. The local run passed on 14 November 2026 with retries disabled. Configured executions are not 246 distinct business scenarios.
+
+See the [failure investigation walkthrough](docs/walkthrough.md) and [session ownership decision](docs/decisions/001-session-ownership.md).
