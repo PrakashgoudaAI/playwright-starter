@@ -10,12 +10,12 @@ Use the Node version specified in package.json. From a fresh checkout:
 
 ```sh
 npm ci
-npx playwright install --with-deps chromium firefox
+npx playwright install --with-deps chromium firefox webkit
 npm run check
 npx playwright test tests/patterns
 ```
 
-The existing configuration starts the local demo server and runs the pattern tests in Chromium and Firefox. Run all pattern files with `npx playwright test tests/patterns`. No external website, account, or API key is needed. To inspect one browser interactively:
+The existing configuration starts the local demo server and runs the pattern tests in Chromium, Firefox and WebKit. Run all pattern files with `npx playwright test tests/patterns`. No external website, account, or API key is needed. To inspect one browser interactively:
 
 ```sh
 npx playwright test tests/patterns/control-patterns.ui.spec.ts --project=chromium --ui

@@ -16,10 +16,7 @@ Use Node.js 24 and npm. From a fresh clone:
 ```sh
 npm ci
 npx playwright install chromium firefox webkit
-npm run check
-npm run lint
-npm run format:check
-npm test
+npm run verify
 ```
 
 Playwright starts and stops the demo server. Port `4173` must be available; set `DEMO_PORT=4300` to use a different port. The suite intentionally targets `127.0.0.1`, not an external application. `.env` files are not loaded automatically.
@@ -77,7 +74,7 @@ CI runs on pushes to `main`, pull requests, and manual dispatch. It uses two wor
 
 This is a focused starter, not a production authentication service. The demo has public plaintext credentials, in-memory data, HTTP-only local hosting, and no rate limiting or account recovery. Its cookie has `HttpOnly` and `SameSite=Strict`; it is not `Secure` because the app runs on local HTTP. Do not deploy it as a real service.
 
-Chromium, Firefox, and WebKit are configured. SSO/MFA, visual baselines, full accessibility assessments, persistent databases, and Azure DevOps execution are not implemented. The included axe checks cover selected workflows and do not establish full WCAG conformance.
+Chromium, Firefox, and WebKit are configured. SSO/MFA, visual baselines, full accessibility assessments, persistent databases, and verified Azure DevOps execution are outside the current evidence. The included [Azure pipeline](azure-pipelines.yml) is a reference configuration; see its [setup and validation limits](docs/azure-pipelines.md). The included axe checks cover selected workflows and do not establish full WCAG conformance.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and the [MIT license](LICENSE).
 
@@ -87,6 +84,6 @@ The reusable GitHub workflow runs two shards and requires their combined test ID
 
 ## Complete verification
 
-Run `npm run verify` after installing dependencies and the three Playwright browsers. It checks types, lint, formatting, 12 unit tests and all 246 configured executions: 27 API checks plus 73 UI checks in Chromium, Firefox and WebKit. The local run passed on 14 November 2026 with retries disabled. Configured executions are not 246 distinct business scenarios.
+Run `npm run verify` after installing dependencies and the three Playwright browsers. It checks types, lint, formatting, 12 unit tests and all 246 configured executions: 27 API checks plus 73 UI checks in Chromium, Firefox and WebKit. The complete local run passed again on 15 November 2026 with retries disabled. Configured executions are not 246 distinct business scenarios.
 
 See the [failure investigation walkthrough](docs/walkthrough.md) and [session ownership decision](docs/decisions/001-session-ownership.md).
