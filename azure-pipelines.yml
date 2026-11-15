@@ -1,0 +1,50 @@
+trigger:
+  branches:
+    include: [main]
+pr:
+  branches:
+    include: [main]
+pool:
+  vmImage: ubuntu-latest
+jobs:
+  - job: browser_tests
+    displayName: Browser and API checks
+    timeoutInMinutes: 20
+    steps:
+      - checkout: self
+        persistCredentials: false
+      - task: UseNode@1
+        inputs:
+          version: '24.x'
+      - script: npm ci
+        displayName: Install locked dependencies
+      - script: npx playwright install --with-deps chromium firefox webkit
+        displayName: Install browsers
+      - script: npm run verify
+        displayName: Verify source and run the complete suite
+        env:
+          CI: 'true'
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: test-results/junit.xml
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
+          failTaskOnFailureToPublishResults: true
+          testRunTitle: Browser and API checks
+      - bash: |
+          set -euo pipefail
+          mkdir -p "$(Build.ArtifactStagingDirectory)/test-evidence"
+          for entry in playwright-report test-results allure-results; do
+            if [ -d "$entry" ]; then
+              cp -R "$entry" "$(Build.ArtifactStagingDirectory)/test-evidence/"
+            fi
+          done
+        condition: succeededOrFailed()
+        displayName: Collect available reports
+      - task: PublishPipelineArtifact@1
+        condition: succeededOrFailed()
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)/test-evidence'
+          artifact: test-evidence
