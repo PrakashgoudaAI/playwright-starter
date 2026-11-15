@@ -14,7 +14,7 @@ These checks run in Chromium, Firefox and WebKit. They do not establish full WCA
 
 ## Tooling choices
 
-`npm run lint` checks floating promises throughout the TypeScript sources. Existing application formatting is retained to keep the change reviewable. Prettier checks the newly added accessibility suite and lint configuration; this is not a claim that the whole repository has been reformatted. Extend that scope deliberately when editing other files.
+`npm run lint` checks floating promises throughout the TypeScript sources. `npm run format:check` checks the source, tests, demo application, scripts and TypeScript configuration files listed in `package.json`. Run `npm run verify` for the complete type, lint, formatting, unit and browser checks.
 
 The lint toolchain required a minimatch override to 11.0.1 because the resolved older versions were affected by [GHSA-g3hv-75wg-m249](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249). Node 24 is the supported runtime. Lint execution and dependency installation were verified with the override. Remove it when upstream dependency ranges resolve a fixed version without it; rerun lint and dependency checks when doing so.
 
